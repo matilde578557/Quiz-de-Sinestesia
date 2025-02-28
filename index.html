@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Questionário de Sinestesia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color:  #ecfff0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header, footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+        }
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color:  #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        .letters span {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Questionário de Sinestesia</h1>
+    </header>
+    <main>
+        <section id="instructions">
+            <h2>Instruções</h2>
+            <p>Siga as instruções para visualizar e digitar as sequências de letras. O progresso será registrado automaticamente.</p>
+            <button id="start-btn">Iniciar Questionário</button>
+        </section>
+        <section id="quiz" class="hidden">
+            <h2 id="quiz-title">Sequência de Letras</h2>
+            <div id="letters" class="letters"></div>
+            <input type="text" id="response" class="hidden" placeholder="Digite as letras..." />
+            <button id="submit-btn" class="hidden">Submeter</button>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sinestesia e Questionário</p>
+    </footer>
+    <script> 
+        document.addEventListener("DOMContentLoaded", function () {
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+            const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#FFA500", "#800080", "#008080", "#FFD700", "#DC143C", "#6495ED", "#008000", "#4B0082", "#FF4500", "#2E8B57", "#8B0000", "#9932CC", "#556B2F", "#8B008B", "#20B2AA", "#CD5C5C", "#FF1493", "#1E90FF", "#ADFF2F", "#7CFC00"];
+            let currentStep = 0;
+            let repeatCount = 0;
+            let currentSequence = [];
+            let responses = JSON.parse(localStorage.getItem('sinestesiaRespostas')) || [];
+
+            let totalSteps = [
+                { size: 2, colored: false },
+                { size: 2, colored: true  },
+                { size: 4, colored: false },
+                { size: 4, colored: true  },
+                { size: 6, colored: false },
+                { size: 6, colored: true  },
+            ];
+
+            function startQuiz() {
+                document.getElementById('instructions').classList.add('hidden');
+                document.getElementById('quiz').classList.remove('hidden');
+                nextStep();
+            }
+
+            function nextStep() {
+                if (currentStep >= totalSteps.length) {
+                    finishQuiz();
+                    return;
+                }
+
+                const { size, colored } = totalSteps[currentStep];
+                generateSequence(size, colored);
+                displaySequence();
+                repeatCount++; 
+
+                if (repeatCount >= 2) {  // Cada sequência será repetida 2 vezes
+                    repeatCount = 0; 
+                    currentStep++;
+                    nextStep();
+                }
+            }
+
+            function generateSequence(size, colored) {
+                currentSequence = [];
+                let availableColors = [...colors];
+                for (let i = 0; i < size; i++) {
+                    let letter = letters[Math.floor(Math.random() * letters.length)];
+                    let color = colored ? availableColors.splice(Math.floor(Math.random() * availableColors.length), 1)[0] : null;
+                    currentSequence.push({ letter, color });
+                }
+            }
+
+            function displaySequence() {
+                const lettersDiv = document.getElementById('letters');
+                lettersDiv.innerHTML = '';
+                currentSequence.forEach(item => {
+                    const span = document.createElement('span');
+                    span.textContent = item.letter;
+                    if (item.color) span.style.color = item.color;
+                    lettersDiv.appendChild(span);
+                });
+                setTimeout(hideSequence, 900); 
+            }
+
+            function hideSequence() {
+                document.getElementById('letters').innerHTML = '';
+                document.getElementById('response').classList.remove('hidden');
+                document.getElementById('submit-btn').classList.remove('hidden');
+            }
+
+            function submitResponse() {
+                const userResponse = document.getElementById('response').value.toUpperCase();
+                responses.push({ step: currentStep, sequence: currentSequence, response: userResponse });
+                localStorage.setItem('sinestesiaRespostas', JSON.stringify(responses));
+                document.getElementById('response').value = '';
+                document.getElementById('response').classList.add('hidden');
+                document.getElementById('submit-btn').classList.add('hidden');
+                nextStep();
+            }
+
+            function finishQuiz() {
+                alert('Questionário concluído! Respostas registradas.');
+                localStorage.setItem('sinestesiaRespostas', JSON.stringify(responses));
+                console.log(responses);
+            }
+
+            document.getElementById('start-btn').addEventListener('click', startQuiz);
+            document.getElementById('submit-btn').addEventListener('click', submitResponse);
+        });
+    </script>
+</body>
+</html>
